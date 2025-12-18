@@ -79,7 +79,7 @@ body{margin:0;background:var(--bg);color:var(--text)}
   cursor:pointer;font-size:15px;font-weight:600
 }
 .filter-btn:hover{
-  background:rgba(0,0,0,.08)
+  background:rgba(0,0,0,.05)
 }
 .filter-menu{
   display:none;position:absolute;
@@ -100,6 +100,35 @@ body{margin:0;background:var(--bg);color:var(--text)}
   background:#fff;margin:0 30px;
   border-radius:15px;overflow:hidden;
   box-shadow:0 10px 20px rgba(0,0,0,.08)
+}
+
+.pagination-controls{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px;border-top:1px solid #eee;
+  background:#fff;font-size:14px
+}
+.pagination-left{display:flex;align-items:center;gap:12px}
+.rows-per-page{display:flex;align-items:center;gap:8px}
+.rows-per-page select{
+  padding:6px 10px;border:1px solid #ddd;
+  border-radius:6px;cursor:pointer;font-size:14px
+}
+.pagination-center{
+  display:flex;align-items:center;gap:8px;
+  flex:1;justify-content:center;color:#666
+}
+.pagination-right{display:flex;align-items:center;gap:8px}
+.pagination-btn{
+  width:32px;height:32px;border-radius:6px;
+  border:1px solid #ddd;background:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;transition:.2s
+}
+.pagination-btn:hover:not(:disabled){
+  background:var(--purple);color:#fff;border-color:var(--purple)
+}
+.pagination-btn:disabled{
+  opacity:.5;cursor:not-allowed
 }
 table{width:100%;border-collapse:collapse}
 thead th{
@@ -139,7 +168,7 @@ td.right{text-align:right}
     SPARE PARTS MANAGEMENT
     <div class="user-id">
       <i class="fa-solid fa-user"></i>
-      <span id="userId">U
+      <span id="userId">USER
       </span>
     </div>
   </div>
@@ -183,6 +212,26 @@ td.right{text-align:right}
       </thead>
       <tbody id="tableBody"></tbody>
     </table>
+    <div class="pagination-controls">
+      <div class="pagination-left">
+        <div class="rows-per-page">
+          <label for="rowsPerPageSelect">Rows per page:</label>
+          <select id="rowsPerPageSelect">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="40">40</option>
+          </select>
+        </div>
+      </div>
+      <div class="pagination-center">
+        <span id="pageInfo">Page 1 of 1</span>
+      </div>
+      <div class="pagination-right">
+        <button class="pagination-btn" id="prevBtn" title="Previous">←</button>
+        <button class="pagination-btn" id="nextBtn" title="Next">→</button>
+      </div>
+    </div>
   </div>
 </div>
 </div>
@@ -193,9 +242,20 @@ td.right{text-align:right}
 const SELLER_NAME = "Alpha Traders";
 
 const rawData = [
-  { name:"Brake Pad", code:"BP-001", desc:"High quality brake pad", price:120, qty:15, exp:"2025-06-15", active:true },
-  { name:"Oil Filter", code:"OF-002", desc:"Premium oil filter", price:35, qty:0, exp:"2025-12-30", active:false },
-  { name:"Clutch plate assembly", code:"CL-44", desc:"Clutch plate assembly", price:250, qty:8, exp:"2026-03-20", active:true }
+  { name:"Alpha Traders", code:"BP-001", desc:"High quality brake pad", price:120, qty:15, exp:"2025-06-15", active:true },
+  { name:"Beta Supplies", code:"OF-002", desc:"Premium oil filter", price:35, qty:0, exp:"2025-12-30", active:false },
+  { name:"Gamma Parts", code:"CL-44", desc:"Clutch plate assembly", price:250, qty:8, exp:"2026-03-20", active:true },
+  { name:"Spark Plug", code:"SP-003", desc:"OEM certified spark plug", price:25, qty:45, exp:"2026-08-10", active:true },
+  { name:"Battery", code:"BA-004", desc:"12V car battery", price:280, qty:5, exp:"2027-01-15", active:true },
+  { name:"Alternator", code:"AL-005", desc:"Engine alternator", price:450, qty:3, exp:"2026-11-05", active:false },
+  { name:"Radiator Hose", code:"RH-006", desc:"Coolant radiator hose", price:55, qty:20, exp:"2025-09-22", active:true },
+  { name:"Air Filter", code:"AF-007", desc:"Engine air filter", price:42, qty:32, exp:"2026-04-18", active:true },
+  { name:"Water Pump", code:"WP-008", desc:"Engine water pump assembly", price:175, qty:7, exp:"2026-06-30", active:true },
+  { name:"Door Lock", code:"DL-009", desc:"Electronic door lock actuator", price:95, qty:12, exp:"2026-10-12", active:false },
+  { name:"Fuel Pump", code:"FP-010", desc:"Electric fuel pump module", price:320, qty:4, exp:"2025-07-25", active:true },
+  { name:"Window Motor", code:"WM-011", desc:"Power window motor", price:140, qty:9, exp:"2026-02-28", active:true },
+  { name:"Suspension Coil", code:"SC-012", desc:"Front suspension coil spring", price:210, qty:6, exp:"2026-05-17", active:true },
+  { name:"Timing Belt", code:"TB-013", desc:"Engine timing belt", price:185, qty:11, exp:"2025-08-09", active:false }
 ];
 
 const data = rawData.map(d=>({
@@ -213,9 +273,29 @@ const data = rawData.map(d=>({
 const tableBody = document.getElementById("tableBody");
 let filteredData = data;
 let statusFilter = "all";
+let currentPage = 1;
+let rowsPerPage = 10;
+
+function getPaginatedData(dataToRender = filteredData) {
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  return dataToRender.slice(startIndex, endIndex);
+}
+
+function getTotalPages(dataToRender = filteredData) {
+  return Math.ceil(dataToRender.length / rowsPerPage);
+}
+
+function updatePaginationInfo() {
+  const totalPages = getTotalPages();
+  document.getElementById("pageInfo").textContent = `Page ${currentPage} of ${totalPages}`;
+  document.getElementById("prevBtn").disabled = currentPage === 1;
+  document.getElementById("nextBtn").disabled = currentPage === totalPages || totalPages === 0;
+}
 
 function renderTable(dataToRender = filteredData) {
-  tableBody.innerHTML = dataToRender.map(d=>`
+  const paginatedData = getPaginatedData(dataToRender);
+  tableBody.innerHTML = paginatedData.map(d=>`
 <tr>
   <td>${d.name}</td>
   <td>${d.code}</td>
@@ -231,6 +311,7 @@ function renderTable(dataToRender = filteredData) {
   </td>
 </tr>
 `).join("");
+  updatePaginationInfo();
 }
 
 function applyFilters() {
@@ -248,13 +329,38 @@ function applyFilters() {
     return matchesSearch && matchesStatus;
   });
   
+  currentPage = 1;
   renderTable();
 }
 
 const searchInput = document.getElementById("searchInput");
 searchInput.addEventListener("input", applyFilters);
 
-/* Filter dropdown */
+const rowsPerPageSelect = document.getElementById("rowsPerPageSelect");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+
+rowsPerPageSelect.addEventListener("change", (e) => {
+  rowsPerPage = parseInt(e.target.value);
+  currentPage = 1;
+  renderTable();
+});
+
+prevBtn.addEventListener("click", () => {
+  if (currentPage > 1) {
+    currentPage--;
+    renderTable();
+  }
+});
+
+nextBtn.addEventListener("click", () => {
+  const totalPages = getTotalPages();
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderTable();
+  }
+});
+
 const filterBtn = document.getElementById("filterBtn");
 const filterMenu = document.getElementById("filterMenu");
 
