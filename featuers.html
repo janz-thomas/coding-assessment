@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Spare Parts Management</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+:root{
+  --purple:#6A0DAD;
+  --bg:#f4f6fb;
+  --odd:#f7f6fe;
+  --text:#111827;
+}
+*{box-sizing:border-box;font-family:Poppins,Inter,system-ui}
+body{margin:0;background:var(--bg);color:var(--text)}
+.layout{display:flex;min-height:100vh}
+
+.sidebar{
+  width:72px;
+  background:linear-gradient(180deg,var(--purple),#3b2bd6);
+  display:flex;flex-direction:column;
+  align-items:center;padding:12px 0
+}
+.logo{color:#fff;font-weight:700;margin-bottom:24px}
+.nav{display:flex;flex-direction:column;gap:18px}
+.nav-btn{
+  width:42px;height:42px;border-radius:10px;
+  border:none;background:transparent;
+  color:#c7c9ff;font-size:18px;cursor:pointer
+}
+.nav-btn.active,.nav-btn:hover{
+  background:rgba(255,255,255,.15);color:#fff
+}
+
+
+.main{flex:1}
+.header{
+  height:64px;background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;letter-spacing:.1em;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+  position:relative
+}
+.header .back{position:absolute;left:16px;cursor:pointer}
+
+.header .user-id{
+  position:absolute;right:16px;
+  display:flex;align-items:center;gap:8px;
+  padding:6px 12px;background:var(--odd);
+  border-radius:6px;font-size:14px;color:var(--text)
+}
+
+.toolbar{
+  display:flex;justify-content:space-between;
+  padding:16px 30px
+}
+.search{
+  display:flex;align-items:center;gap:8px;
+  background:#fff;border-radius:8px;
+  padding:8px 12px;width:280px;
+  box-shadow:0 1px 3px rgba(0,0,0,.08)
+}
+.search input{
+  border:none;outline:none;width:100%;
+  background:transparent;font-size:15px
+}
+.actions{display:flex;gap:12px}
+
+.filter-dropdown{
+  position:relative;display:inline-block
+}
+.filter-btn{
+  background:transparent;color:#000;
+  border:none;padding:8px 16px;border-radius:8px;
+  cursor:pointer;font-size:15px;font-weight:600
+}
+.filter-btn:hover{
+  background:rgba(0,0,0,.08)
+}
+.filter-menu{
+  display:none;position:absolute;
+  top:100%;right:0;background:#fff;
+  border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.15);
+  min-width:180px;z-index:100;margin-top:8px
+}
+.filter-menu.show{display:block}
+.filter-menu label{
+  display:flex;align-items:center;padding:10px 12px;
+  cursor:pointer;gap:8px;font-size:14px;
+  border-bottom:1px solid #eee
+}
+.filter-menu label:last-child{border-bottom:none}
+.filter-menu input[type="radio"]{cursor:pointer}
+
+.card{
+  background:#fff;margin:0 30px;
+  border-radius:15px;overflow:hidden;
+  box-shadow:0 10px 20px rgba(0,0,0,.08)
+}
+table{width:100%;border-collapse:collapse}
+thead th{
+  padding:16px;font-size:12px;
+  text-transform:uppercase;border-bottom:1px solid #eee;
+  text-align:left
+}
+tbody td{padding:14px 16px;font-size:15px}
+tbody tr:nth-child(odd){background:var(--odd)}
+td.right{text-align:right}
+
+.status{
+  padding:4px 10px;border-radius:999px;
+  font-size:12px;font-weight:600
+}
+.active{background:#e8f5e9;color:#2e7d32}
+.inactive{background:#ffebee;color:#c62828}
+</style>
+</head>
+
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="logo">LOGO</div>
+  <nav class="nav">
+    <button class="nav-btn active">☷</button>
+    <button class="nav-btn">✔</button>
+    <button class="nav-btn">📊</button>
+    <button class="nav-btn">⚙</button>
+  </nav>
+</aside>
+
+<div class="main">
+  <div class="header">
+    <div class="back" onclick="history.back()">←</div>
+    SPARE PARTS MANAGEMENT
+    <div class="user-id">
+      <i class="fa-solid fa-user"></i>
+      <span id="userId">U
+      </span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input id="searchInput" placeholder="Search parts...">
+    </div>
+    <div class="actions">
+      <div class="filter-dropdown">
+        <button class="filter-btn" id="filterBtn">⚙ Filter</button>
+        <div class="filter-menu" id="filterMenu">
+          <label>
+            <input type="radio" name="statusFilter" value="all" checked> All
+          </label>
+          <label>
+            <input type="radio" name="statusFilter" value="active"> Active
+          </label>
+          <label>
+            <input type="radio" name="statusFilter" value="inactive"> Inactive
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Part Name</th>
+          <th>Code</th>
+          <th>Description</th>
+          <th class="right">Price</th>
+          <th class="right">Qty</th>
+          <th>Seller</th>
+          <th>Exp</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<script>
+
+
+const SELLER_NAME = "Alpha Traders";
+
+const rawData = [
+  { name:"Brake Pad", code:"BP-001", desc:"High quality brake pad", price:120, qty:15, exp:"2025-06-15", active:true },
+  { name:"Oil Filter", code:"OF-002", desc:"Premium oil filter", price:35, qty:0, exp:"2025-12-30", active:false },
+  { name:"Clutch plate assembly", code:"CL-44", desc:"Clutch plate assembly", price:250, qty:8, exp:"2026-03-20", active:true }
+];
+
+const data = rawData.map(d=>({
+  name: d.name,
+  code: d.code,
+  desc: d.desc,
+  price: d.price,
+  qty: d.qty,
+  seller: SELLER_NAME,
+  exp: d.exp,
+  active: d.active
+}));
+
+
+const tableBody = document.getElementById("tableBody");
+let filteredData = data;
+let statusFilter = "all";
+
+function renderTable(dataToRender = filteredData) {
+  tableBody.innerHTML = dataToRender.map(d=>`
+<tr>
+  <td>${d.name}</td>
+  <td>${d.code}</td>
+  <td>${d.desc}</td>
+  <td class="right">AED ${d.price.toFixed(2)}</td>
+  <td class="right">${d.qty}</td>
+  <td>${d.seller}</td>
+  <td>${d.exp}</td>
+  <td>
+    <span class="status ${d.active?"active":"inactive"}">
+      ${d.active?"Active":"Inactive"}
+    </span>
+  </td>
+</tr>
+`).join("");
+}
+
+function applyFilters() {
+  const searchQuery = document.getElementById("searchInput").value.toLowerCase();
+  
+  filteredData = data.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery) ||
+                         p.code.toLowerCase().includes(searchQuery) ||
+                         p.desc.toLowerCase().includes(searchQuery);
+    
+    const matchesStatus = statusFilter === "all" || 
+                         (statusFilter === "active" && p.active) ||
+                         (statusFilter === "inactive" && !p.active);
+    
+    return matchesSearch && matchesStatus;
+  });
+  
+  renderTable();
+}
+
+const searchInput = document.getElementById("searchInput");
+searchInput.addEventListener("input", applyFilters);
+
+/* Filter dropdown */
+const filterBtn = document.getElementById("filterBtn");
+const filterMenu = document.getElementById("filterMenu");
+
+filterBtn.addEventListener("click", () => {
+  filterMenu.classList.toggle("show");
+});
+
+document.querySelectorAll('input[name="statusFilter"]').forEach(radio => {
+  radio.addEventListener("change", (e) => {
+    statusFilter = e.target.value;
+    applyFilters();
+  });
+});
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".filter-dropdown")) {
+    filterMenu.classList.remove("show");
+  }
+});
+
+renderTable();
+
+</script>
+</body>
+</html>
